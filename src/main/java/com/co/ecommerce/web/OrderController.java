@@ -33,4 +33,17 @@ public class OrderController {
         return orderService.getOrderById(orderId);
     }
 
+    @DeleteMapping("/{orderId}")
+    @ResponseStatus(HttpStatus.OK)
+    public void deleteOrderById(@PathVariable long orderId) {
+        orderService.deletedOrderById(orderId);
+    }
+
+    @PutMapping("/{orderId}")
+    @ResponseStatus(HttpStatus.OK)
+    public void updateOrder(@PathVariable long orderId, @RequestBody OrderDTO orderDTO) {
+        orderDTO.setOrderId(orderId);
+        orderService.updateOrder(orderDTO);
+    }
+
 }

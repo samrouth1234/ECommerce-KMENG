@@ -1,6 +1,5 @@
 package com.co.ecommerce.web;
 
-import com.co.ecommerce.entity.Employee;
 import com.co.ecommerce.service.EmployeeService;
 import com.co.ecommerce.web.dto.EmployeeDTO;
 import lombok.RequiredArgsConstructor;

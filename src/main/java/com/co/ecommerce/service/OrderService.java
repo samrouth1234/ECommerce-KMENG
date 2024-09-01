@@ -24,6 +24,7 @@ public class OrderService {
     private final EmployeeRepository employeeRepository;
     private final ShipperRepository shipperRepository;
     private final ProductRepository productRepository;
+    private final OrderDetailRepository orderDetailRepository;
     private final OrderMapper orderMapper;
     private final OrderDetailMapper orderDetailMapper;
 
@@ -60,6 +61,7 @@ public class OrderService {
             OrderDetail orderDetail = orderDetailMapper.mapOrderDetailDTOToOrderDetail(orderDetailDTO);
             orderDetail.setOrder(order);
             orderDetail.setProduct(product);
+            orderDetail.setQuantity(orderDetailDTO.getQuantity());
             orderDetails.add(orderDetail);
         }
         order.setOrderDetails(orderDetails);
@@ -80,7 +82,7 @@ public class OrderService {
                 .collect(Collectors.toList());
     }
 
-    // find Oder by ID
+    // Find Oder by ID
     public OrderDTO getOrderById(Long orderId) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(
@@ -90,6 +92,70 @@ public class OrderService {
         orderDTO.setOrderDetails(orderMapper.mapOrderDetailsToOrderDetailDTO(order.getOrderDetails()));
         return orderDTO;
     }
+
+    // Deleted Order By ID
+    public void deletedOrderById(Long orderId){
+        Order order = orderRepository.findById(orderId).orElseThrow(
+                () -> new RuntimeException("Order not found")
+        );
+        orderRepository.delete(order);
+    }
+
+    // Update Order
+    public void updateOrder(OrderDTO orderDTO) {
+        Order order = orderRepository.findById(orderDTO.getOrderId())
+                .orElseThrow(
+                        () -> new RuntimeException("Order not found")
+                );
+
+        // Update order details
+        order.setCustomer(customerRepository.findById(orderDTO.getCustomerId())
+                .orElseThrow(
+                        () -> new RuntimeException("Customer not found")
+                ));
+        order.setEmployee(employeeRepository.findById(orderDTO.getEmployeeId())
+                .orElseThrow(
+                        () -> new RuntimeException("Employee not found")
+                ));
+        order.setShipper(shipperRepository.findById(orderDTO.getShipperId())
+                .orElseThrow(
+                        () -> new RuntimeException("Shipper not found")
+                ));
+        order.setOrderDate(LocalDate.now());
+
+        // Update order details
+        List<OrderDetail> existingOrderDetails = order.getOrderDetails();
+        existingOrderDetails.clear();
+
+        for (OrderDetailDTO orderDetailDTO : orderDTO.getOrderDetails()) {
+            Product product = productRepository.findById(orderDetailDTO.getProductId())
+                    .orElseThrow(
+                            () -> new RuntimeException("Product not found")
+                    );
+            OrderDetail orderDetail;
+            if (orderDetailDTO.getOrderId() != null) {
+                orderDetail = orderDetailRepository.findById(orderDetailDTO.getOrderId())
+                        .orElseThrow(
+                                () -> new RuntimeException("Order detail not found")
+                        );
+            } else {
+                orderDetail = new OrderDetail();
+            }
+            orderDetailMapper.mapOrderDetailDTOToOrderDetail(orderDetailDTO);
+            orderDetail.setOrder(order);
+            orderDetail.setProduct(product);
+            orderDetail.setQuantity(orderDetailDTO.getQuantity());
+            existingOrderDetails.add(orderDetail);
+        }
+
+        // Save the updated order
+        orderRepository.save(order);
+
+        // Return the updated order DTO
+        OrderDTO updatedOrderDTO = orderMapper.mapOrderToOrderDTO(order);
+        updatedOrderDTO.setOrderDetails(orderMapper.mapOrderDetailsToOrderDetailDTO(order.getOrderDetails()));
+    }
+
 }
 
 
